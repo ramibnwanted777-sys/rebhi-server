@@ -37,8 +37,9 @@ router.post('/ad/complete', (req, res) => {
   if (!isToday(u.lastWatchDate)) { u.watchedToday = 0; u.lastWatchDate = new Date().toDateString(); }
   if (u.watchedToday >= DAILY_LIMIT) return res.status(400).json({ error: 'استنفدت حصتك اليومية' });
 
-  const lastAd = req.body && req.body.startedAt ? Number(req.body.startedAt) : null;
-  if (lastAd && (Date.now() - lastAd) < 3000) {
+  // Anti-autoclick guard measured on the SERVER clock only (no client-clock dependency)
+  const now = Date.now();
+  if (u.lastAdCompleteAt && (now - u.lastAdCompleteAt) < 3000) {
     u.suspicion = (u.suspicion || 0) + 1;
     if (u.suspicion >= 2) {
       u.blocked = true;
@@ -50,6 +51,8 @@ router.post('/ad/complete', (req, res) => {
     return res.status(400).json({ error: 'مدة العرض غير كافية' });
   }
 
+  u.lastAdCompleteAt = now;
+  u.suspicion = 0;
   u.points += POINTS_PER_AD;
   u.watchedToday += 1;
   addTransaction(u, 'earn', POINTS_PER_AD);
