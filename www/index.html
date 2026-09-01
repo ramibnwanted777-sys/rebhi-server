@@ -11,6 +11,7 @@
   --green:#0B6E4F; --greenDark:#084D38; --gold:#E0A02E; --goldSoft:#F6E4BE;
   --line:#EAE3D2; --danger:#B3432B; --earnBg:#E6F2EC; --dangerBg:#FBEAE5;
 }
+.splash-logo{width:68px;height:68px;border-radius:20px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;}
 *{box-sizing:border-box;}
 body{margin:0;font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--ink);}
 .disp{font-family:'Cairo',sans-serif;}
@@ -73,10 +74,11 @@ svg.ic{display:block;flex-shrink:0;}
 .wheel-label{position:absolute;top:-74px;left:-12px;width:24px;text-align:center;color:#fff;font-size:12px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,0.35);}
 .wheel-btn{width:100%;border:none;border-radius:16px;padding:14px 0;font-size:14.5px;font-weight:700;}
 .games-grid{padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;}
-.game-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 12px;text-align:center;}
-.game-card .gi{width:42px;height:42px;border-radius:12px;background:var(--earnBg);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
-.game-name{font-size:13.5px;font-weight:700;}
-.game-reward{font-size:11.5px;color:var(--gold);margin-top:3px;font-weight:700;}
+.game-card{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:20px 14px;text-align:center;transition:transform .15s;box-shadow:0 4px 14px -8px rgba(30,42,34,0.15);}
+.game-card:active{transform:scale(0.96);}
+.game-card .gi{width:52px;height:52px;border-radius:14px;background:var(--earnBg);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;}
+.game-name{font-size:14.5px;font-weight:700;}
+.game-reward{font-size:12px;color:var(--gold);margin-top:4px;font-weight:700;}
 .section-lbl2{padding:4px 20px 8px;font-size:13px;font-weight:700;color:var(--muted);}
 
 .tx-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--line);}
@@ -101,8 +103,9 @@ svg.ic{display:block;flex-shrink:0;}
 
 .toast{position:absolute;bottom:78px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:13.5px;display:flex;align-items:center;gap:8px;box-shadow:0 10px 25px -8px rgba(0,0,0,0.4);white-space:nowrap;z-index:30;}
 
-.watch-overlay{position:absolute;inset:0;background:rgba(10,14,11,0.94);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:18px;z-index:20;}
-.watch-circle{width:84px;height:84px;border-radius:50%;border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;}
+.watch-overlay{position:absolute;inset:0;background:rgba(10,14,11,0.94);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:10px;z-index:20;padding:24px;}
+.ad-badge{background:var(--gold);color:var(--ink);font-size:12px;font-weight:800;padding:6px 16px;border-radius:999px;}
+.ad-skip{border:1px solid rgba(255,255,255,0.25);background:transparent;color:#fff;border-radius:999px;padding:10px 26px;font-size:13.5px;font-weight:700;margin-top:18px;}
 
 .blocked-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 30px;text-align:center;background:#1B1210;color:#fff;}
 .blocked-icon{width:70px;height:70px;border-radius:50%;background:rgba(179,67,43,0.15);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
@@ -133,13 +136,15 @@ svg.ic{display:block;flex-shrink:0;}
 /* modal */
 .modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;z-index:40;padding:20px;}
 .modal-overlay.active{display:flex;}
-.modal-box{background:var(--surface);border-radius:22px;padding:26px 22px;width:100%;text-align:center;position:relative;}
+.modal-box{background:var(--surface);border-radius:24px;padding:28px 22px;width:100%;max-width:340px;text-align:center;position:relative;box-shadow:0 24px 50px -16px rgba(0,0,0,0.35);}
 .modal-close{position:absolute;top:14px;left:14px;background:none;border:none;color:var(--muted);}
-.num-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0;}
-.num-btn{padding:12px 0;border-radius:10px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-weight:700;font-family:'Tajawal';font-size:15px;}
-.num-btn:disabled{opacity:0.35;}
-.reaction-zone{position:relative;height:200px;background:var(--bg);border-radius:16px;margin:16px 0;overflow:hidden;border:1px solid var(--line);}
-.reaction-target{width:56px;height:56px;border-radius:50%;background:var(--green);position:absolute;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.num-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:18px 0;}
+.num-btn{padding:15px 0;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-weight:700;font-family:'Tajawal';font-size:17px;transition:transform .1s;}
+.num-btn:active{transform:scale(0.9);}
+.num-btn:disabled{opacity:0.3;background:var(--line);}
+.reaction-zone{position:relative;height:220px;background:var(--bg);border-radius:16px;margin:16px 0 4px;overflow:hidden;border:1.5px solid var(--line);}
+.reaction-target{width:60px;height:60px;border-radius:50%;background:var(--green);position:absolute;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px -6px rgba(11,110,79,0.5);}
+.game-cooldown-icon{background:var(--goldSoft);border-radius:16px;width:56px;height:56px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
 
 
 </style>
@@ -183,7 +188,7 @@ const POINT_VALUE_DZD = 0.01;
 const MIN_WITHDRAW = 5000;
 const OPERATORS = ["موبيليس","جيزي","أوريدو"];
 const ADMIN_EMAIL = "admin@rebhi.dz";
-const API_BASE = 'http://192.168.5.30:3000/api';
+const API_BASE = 'https://rebhi-server.onrender.com/api';
 let authToken = localStorage.getItem('rebhi_token') || null;
 const WHEEL_PRIZES = [5,0,20,10,5,50,0,15];
 const GAME_COOLDOWN_MS = 30000;
@@ -197,15 +202,24 @@ function fmtTime(ts){ return new Date(ts).toLocaleTimeString('ar-DZ',{hour:'2-di
 async function api(path, opts={}){
   const headers = { 'Content-Type':'application/json', ...(opts.headers||{}) };
   if(authToken) headers['Authorization'] = 'Bearer '+authToken;
-  const res = await fetch(API_BASE+path, { ...opts, headers });
-  let body = null;
-  try{ body = await res.json(); }catch(e){}
-  if(!res.ok){
-    const err = new Error((body && body.error) || 'حدث خطأ');
-    err.status = res.status;
-    throw err;
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 45000);
+  try{
+    const res = await fetch(API_BASE+path, { ...opts, headers, signal: controller.signal });
+    clearTimeout(timer);
+    let body = null;
+    try{ body = await res.json(); }catch(e){}
+    if(!res.ok){
+      const err = new Error((body && body.error) || 'حدث خطأ');
+      err.status = res.status;
+      throw err;
+    }
+    return body;
+  }catch(e){
+    clearTimeout(timer);
+    if(e.name === 'AbortError') throw new Error('السيرفر يستجيق الآن، أعد المحاولة خلال ثوانٍ');
+    throw e;
   }
-  return body;
 }
 
 function handleApiErr(e, el){
@@ -226,7 +240,7 @@ function showToast(text){
 
 function render(){
   const app = document.getElementById('app');
-  if(state.loading){ app.innerHTML = `<div style="color:var(--muted)">جارِ التحميل...</div>`; return; }
+  if(state.loading){ app.innerHTML = `<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--green);color:#fff;"><div class="splash-logo">${icon('coin',34,'#fff')}</div><div class="disp" style="font-size:20px;font-weight:800;">ربحي</div><div style="font-size:12.5px;opacity:0.75;">جارِ الاتصال بالسيرفر...</div></div>`; return; }
   if(state.screen === 'admin') { app.innerHTML = `<div class="phone admin-phone">${renderAdmin()}</div>`; attachAdminEvents(); return; }
   if(state.screen === 'adminAuth'){ app.innerHTML = `<div class="phone">${renderAdminAuth()}</div>`; attachAdminAuthEvents(); return; }
   if(!state.user){ app.innerHTML = `<div class="phone">${renderAuth()}</div>`; attachAuthEvents(); return; }
@@ -255,14 +269,16 @@ function renderAuth(){
     <div class="field"><label>${icon('lock',14)} كلمة السر</label><input id="a-pass" type="password" placeholder="••••••••" dir="ltr"></div>
     <div class="err" id="a-err"></div>
     <button class="primary-btn disp" id="a-submit">${login? 'دخول' : 'إنشاء الحساب'}</button>
-    <div class="small-note">نموذج تجريبي — البيانات محفوظة لغرض المعاينة فقط</div>
+    <button class="admin-link-btn" id="a-admin">${icon('shield',13)} لوحة تحكم المدير</button>
+    <div class="small-note">شاهد إعلانات · اجمع نقاط · اسحب فلوسك</div>
   </div>`;
 }
 let secretTapCount = 0, secretTapTimer = null;
 function attachAuthEvents(){
   document.getElementById('pill-login').onclick = ()=>{ state.authMode='login'; render(); };
   document.getElementById('pill-signup').onclick = ()=>{ state.authMode='signup'; render(); };
-  // Hidden admin entry: tap the logo 5 times within 3 seconds (no visible link)
+  document.getElementById('a-admin').onclick = ()=>{ state.screen='adminAuth'; render(); };
+  // Hidden admin entry: tap the logo 5 times within 3 seconds (backup)
   const logo = document.querySelector('.head-green .head-icon');
   if(logo){
     logo.style.cursor = 'pointer';
@@ -365,7 +381,7 @@ function renderMainApp(u){
     ${state.tab==='wallet'? renderWallet(u): ''}
     ${state.tab==='withdraw'? renderWithdraw(u): ''}
     ${state.toast? `<div class="toast">${icon('check',15,'var(--gold)')} ${state.toast}</div>` : ''}
-    ${state.watching? `<div class="watch-overlay"><div class="watch-circle">${state.countdown}</div><div style="font-size:14px;opacity:0.75;">الإعلان قيد العرض...</div></div>` : ''}
+    ${state.watching? `<div class="watch-overlay"><div class="ad-badge">إعلان</div><div style="font-size:20px;font-weight:800;margin-top:8px;">محتوى رعائي</div><div style="font-size:13px;opacity:0.7;margin-top:6px;max-width:240px;text-align:center;">شكراً لصبرك — يتبقى ${state.countdown} ثوانٍ</div><div class="ad-skip" id="ad-skip">تخطي (${state.countdown})</div></div>` : ''}
     <div class="modal-overlay" id="modal-overlay"></div>
   </div>
   <nav class="bottomnav">
@@ -543,12 +559,16 @@ async function startAd(){
   if(remaining <= 0 || state.watching) return;
   const startedAt = Date.now();
   state.watching = true; state.countdown = 5; render();
+  const skip = document.getElementById('ad-skip');
+  if(skip) skip.onclick = () => { if(state.countdown<=0) return; };
   const timer = setInterval(()=>{
     state.countdown--;
+    const s = document.getElementById('ad-skip');
+    if(s) s.textContent = `تخطي (${state.countdown})`;
     if(state.countdown <= 0){
       clearInterval(timer);
       finishAd(u, startedAt);
-    } else render();
+    }
   }, 1000);
 }
 async function finishAd(u, startedAt){
@@ -587,7 +607,7 @@ function openGuessGame(){
   const overlay = document.getElementById('modal-overlay');
   if(!canPlayGame(u)){
     overlay.classList.add('active');
-    overlay.innerHTML = `<div class="modal-box"><button class="modal-close" id="mc">${icon('x',18)}</button><div class="disp" style="font-weight:800;margin-bottom:6px;">انتظر قليلاً</div><div style="font-size:13px;color:var(--muted);">يمكنك لعب لعبة أخرى بعد قليل من الوقت لتجنب الغش</div></div>`;
+    overlay.innerHTML = `<div class="modal-box"><button class="modal-close" id="mc">${icon('x',18)}</button><div class="game-cooldown-icon">${icon('clock',26,'var(--gold)')}</div><div class="disp" style="font-weight:800;margin-bottom:6px;font-size:15px;">انتظر قليلاً</div><div style="font-size:13px;color:var(--muted);line-height:1.7;">يمكنك لعب لعبة أخرى بعد ${GAME_COOLDOWN_MS/1000} ثانية لتجنب الغش</div></div>`;
     document.getElementById('mc').onclick = ()=> overlay.classList.remove('active');
     return;
   }
@@ -628,7 +648,7 @@ function openReactionGame(){
   const overlay = document.getElementById('modal-overlay');
   if(!canPlayGame(u)){
     overlay.classList.add('active');
-    overlay.innerHTML = `<div class="modal-box"><button class="modal-close" id="mc">${icon('x',18)}</button><div class="disp" style="font-weight:800;margin-bottom:6px;">انتظر قليلاً</div><div style="font-size:13px;color:var(--muted);">يمكنك لعب لعبة أخرى بعد قليل من الوقت لتجنب الغش</div></div>`;
+    overlay.innerHTML = `<div class="modal-box"><button class="modal-close" id="mc">${icon('x',18)}</button><div class="game-cooldown-icon">${icon('clock',26,'var(--gold)')}</div><div class="disp" style="font-weight:800;margin-bottom:6px;font-size:15px;">انتظر قليلاً</div><div style="font-size:13px;color:var(--muted);line-height:1.7;">يمكنك لعب لعبة أخرى بعد ${GAME_COOLDOWN_MS/1000} ثانية لتجنب الغش</div></div>`;
     document.getElementById('mc').onclick = ()=> overlay.classList.remove('active');
     return;
   }
@@ -822,6 +842,8 @@ function attachAdminEvents(){
 }
 
 (async function init(){
+  // Wake the free cloud server (Render sleeps after idle)
+  try{ fetch(API_BASE.replace('/api','')+'/health'); }catch(e){}
   render();
   if(authToken && state.screen==='auth'){
     try{
