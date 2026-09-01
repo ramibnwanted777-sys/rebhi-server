@@ -39,6 +39,8 @@ app.use(morgan('dev'));
 
 app.get('/health', (req, res) => res.json({ status: 'ok', time: Date.now() }));
 
+app.get('/', (req, res) => res.send('Rebhi API server is running. Use /api endpoints.'));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/withdraw', withdrawRoutes);
