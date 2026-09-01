@@ -1,0 +1,8 @@
+node_modules/
+server/node_modules/
+server/data/
+android/
+design-assets/
+*.apk
+*.log
+.DS_Store

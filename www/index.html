@@ -18,9 +18,9 @@ button{font-family:inherit;cursor:pointer;}
 input{font-family:inherit;}
 svg.ic{display:block;flex-shrink:0;}
 
-.page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 12px;flex-direction:column;gap:18px;}
-.phone{width:100%;max-width:380px;min-height:700px;background:var(--surface);border-radius:34px;border:10px solid var(--ink);box-shadow:0 30px 60px -20px rgba(30,42,34,0.35);overflow:hidden;position:relative;display:flex;flex-direction:column;}
-.admin-phone{max-width:760px;border-radius:20px;border-width:0;box-shadow:none;background:transparent;}
+.page{min-height:100vh;display:flex;background:var(--bg);flex-direction:column;}
+.phone{width:100%;min-height:100vh;background:var(--surface);position:relative;display:flex;flex-direction:column;flex:1;}
+.admin-phone{max-width:760px;margin:0 auto;width:100%;}
 
 .head-green{background:var(--green);padding:44px 28px 34px;color:#fff;text-align:center;}
 .head-ink{background:var(--ink);padding:44px 28px 34px;color:#fff;text-align:center;}
@@ -141,22 +141,13 @@ svg.ic{display:block;flex-shrink:0;}
 .reaction-zone{position:relative;height:200px;background:var(--bg);border-radius:16px;margin:16px 0;overflow:hidden;border:1px solid var(--line);}
 .reaction-target{width:56px;height:56px;border-radius:50%;background:var(--green);position:absolute;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 
-/* native banner ad slot */
-.ad-slot{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px;text-align:center;}
-.ad-slot .ad-lbl{font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:0.5px;}
+
 </style>
 </head>
 <body>
 <div class="page">
   <div id="app"></div>
-  <div class="ad-slot">
-    <div class="ad-lbl">إعلان · ADVERTISEMENT</div>
-    <div id="container-d89ebb4f0e2a3afed746cb2f0cf5c3f1"></div>
-  </div>
 </div>
-
-<script async="async" data-cfasync="false" src="https://pl31116978.profitableratecpmnetwork.com/d89ebb4f0e2a3afed746cb2f0cf5c3f1/invoke.js"></script>
-<script src="https://pl31116977.profitableratecpmnetwork.com/4e/ff/17/4eff17ce01fed422fe2a3b5899021bfb.js"></script>
 
 <script>
 /* ---------- ICONS (inline SVG, no external images/emojis) ---------- */
@@ -186,44 +177,45 @@ function icon(name, size=18, color='currentColor', stroke=1.8){
   return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 }
 
-const STORE = window.storage;
 const DAILY_LIMIT = 20;
 const POINTS_PER_AD = 10;
 const POINT_VALUE_DZD = 0.01;
 const MIN_WITHDRAW = 5000;
 const OPERATORS = ["موبيليس","جيزي","أوريدو"];
-const AD_MIN_GAP_MS = 3500;
-const SUSPICION_LIMIT = 2;
 const ADMIN_EMAIL = "admin@rebhi.dz";
-const ADMIN_PASSWORD = "Admin@2026";
-// AdMob IDs — from Google AdMob console (used only inside the native Android app; browsers ignore these)
-const ADMOB_APP_ID = "ca-app-pub-9018433497633458~6991878742";
-const ADMOB_REWARDED_UNIT_ID = "ca-app-pub-9018433497633458/4075282810";
-function isNativeApp(){
-  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-}
+const API_BASE = 'http://192.168.5.30:3000/api';
+let authToken = localStorage.getItem('rebhi_token') || null;
 const WHEEL_PRIZES = [5,0,20,10,5,50,0,15];
 const GAME_COOLDOWN_MS = 30000;
 
-let state = { screen:'auth', authMode:'login', user:null, users:{}, withdrawals:[], loading:true, tab:'home', toast:null, watching:false, countdown:5 };
+let state = { screen:'auth', authMode:'login', user:null, transactions:[], withdrawals:[], adminData:null, adminTab:'withdrawals', loading:true, tab:'home', toast:null, watching:false, countdown:5 };
 
 function todayStr(){ return new Date().toDateString(); }
 function fmtDate(ts){ return new Date(ts).toLocaleDateString('ar-DZ',{day:'numeric',month:'short'}); }
 function fmtTime(ts){ return new Date(ts).toLocaleTimeString('ar-DZ',{hour:'2-digit',minute:'2-digit'}); }
 
-async function loadData(){
-  try{ const r = await STORE.get('rebhi_users', true); state.users = r ? JSON.parse(r.value) : {}; }catch(e){ state.users = {}; }
-  try{ const r = await STORE.get('rebhi_withdrawals', true); state.withdrawals = r ? JSON.parse(r.value) : []; }catch(e){ state.withdrawals = []; }
-  state.loading = false;
+async function api(path, opts={}){
+  const headers = { 'Content-Type':'application/json', ...(opts.headers||{}) };
+  if(authToken) headers['Authorization'] = 'Bearer '+authToken;
+  const res = await fetch(API_BASE+path, { ...opts, headers });
+  let body = null;
+  try{ body = await res.json(); }catch(e){}
+  if(!res.ok){
+    const err = new Error((body && body.error) || 'حدث خطأ');
+    err.status = res.status;
+    throw err;
+  }
+  return body;
 }
-async function saveUsers(){ await STORE.set('rebhi_users', JSON.stringify(state.users), true); }
-async function saveWithdrawals(){ await STORE.set('rebhi_withdrawals', JSON.stringify(state.withdrawals), true); }
 
-function getUser(){ return state.users[state.user]; }
-function ensureDaily(u){
-  if(u.lastWatchDate !== todayStr()){ u.watchedToday = 0; u.lastWatchDate = todayStr(); }
-  if(u.wheelDate !== todayStr()){ u.wheelSpun = false; u.wheelDate = todayStr(); }
+function handleApiErr(e, el){
+  const errEl = el ? document.getElementById(el) : null;
+  if(errEl) errEl.textContent = e.message;
+  else showToast(e.message);
+  if(e.status === 401){ authToken = null; localStorage.removeItem('rebhi_token'); state.user=null; render(); }
 }
+
+function getUser(){ return state.user; }
 function canPlayGame(u){ return Date.now() - (u.lastGameAt||0) > GAME_COOLDOWN_MS; }
 
 function showToast(text){
@@ -239,7 +231,6 @@ function render(){
   if(state.screen === 'adminAuth'){ app.innerHTML = `<div class="phone">${renderAdminAuth()}</div>`; attachAdminAuthEvents(); return; }
   if(!state.user){ app.innerHTML = `<div class="phone">${renderAuth()}</div>`; attachAuthEvents(); return; }
   const u = getUser();
-  ensureDaily(u);
   if(u.blocked){ app.innerHTML = `<div class="phone">${renderBlocked()}</div>`; attachBlockedEvents(); return; }
   app.innerHTML = `<div class="phone">${renderMainApp(u)}</div>`;
   attachMainEvents(u);
@@ -293,27 +284,33 @@ function attachAuthEvents(){
     err.textContent = '';
     if(!email.includes('@')){ err.textContent='أدخل بريدًا إلكترونيًا صحيحًا'; return; }
     if(pass.length < 6){ err.textContent='كلمة السر يجب أن تكون 6 محارف على الأقل'; return; }
-    if(state.authMode === 'signup'){
-      const name = document.getElementById('a-name').value.trim();
-      if(name.length < 2){ err.textContent='أدخل اسمك الكامل'; return; }
-      if(state.users[email]){ err.textContent='هذا البريد مسجل بالفعل'; return; }
-      state.users[email] = {
-        name, email, password: pass, points: 0,
-        watchedToday: 0, lastWatchDate: todayStr(),
-        wheelSpun: false, wheelDate: todayStr(), lastGameAt: 0,
-        transactions: [], suspicion: 0, blocked: false,
-        lastAdStart: null, gaps: [], joinedAt: Date.now()
-      };
-      await saveUsers();
-      state.user = email;
-      showToast('تم إنشاء الحساب بنجاح');
-    } else {
-      const u = state.users[email];
-      if(!u || u.password !== pass){ err.textContent='بيانات دخول غير صحيحة'; return; }
-      state.user = email;
-    }
-    render();
+    try{
+      let data;
+      if(state.authMode === 'signup'){
+        const name = document.getElementById('a-name').value.trim();
+        if(name.length < 2){ err.textContent='أدخل اسمك الكامل'; return; }
+        data = await api('/auth/signup', { method:'POST', body: JSON.stringify({ name, email, password: pass }) });
+      } else {
+        data = await api('/auth/login', { method:'POST', body: JSON.stringify({ email, password: pass }) });
+      }
+      authToken = data.token;
+      localStorage.setItem('rebhi_token', authToken);
+      state.user = data.user;
+      await refreshMe();
+      showToast(state.authMode==='signup'? 'تم إنشاء الحساب بنجاح' : 'أهلًا بك');
+    }catch(e){ handleApiErr(e, 'a-err'); }
   };
+}
+
+async function refreshMe(){
+  try{
+    const data = await api('/user/me');
+    state.user = data.user;
+    state.transactions = data.transactions;
+  }catch(e){
+    if(e.status===401){ authToken=null; localStorage.removeItem('rebhi_token'); state.user=null; }
+    else showToast(e.message);
+  }
 }
 
 function renderAdminAuth(){
@@ -333,11 +330,18 @@ function renderAdminAuth(){
 }
 function attachAdminAuthEvents(){
   document.getElementById('ad-back').onclick = ()=>{ state.screen='auth'; render(); };
-  document.getElementById('ad-submit').onclick = ()=>{
+  document.getElementById('ad-submit').onclick = async ()=>{
     const email = document.getElementById('ad-email').value.trim();
     const pass = document.getElementById('ad-pass').value;
-    if(email === ADMIN_EMAIL && pass === ADMIN_PASSWORD){ state.screen='admin'; render(); }
-    else document.getElementById('ad-err').textContent = 'بيانات دخول غير صحيحة';
+    try{
+      const data = await api('/auth/login', { method:'POST', body: JSON.stringify({ email, password: pass }) });
+      if(!data.user || data.user.email !== ADMIN_EMAIL) throw new Error('بيانات دخول غير صحيحة');
+      authToken = data.token;
+      localStorage.setItem('rebhi_token', authToken);
+      state.user = data.user;
+      state.screen='admin';
+      await loadAdmin();
+    }catch(e){ handleApiErr(e, 'ad-err'); }
   };
 }
 
@@ -361,7 +365,7 @@ function renderMainApp(u){
     ${state.tab==='wallet'? renderWallet(u): ''}
     ${state.tab==='withdraw'? renderWithdraw(u): ''}
     ${state.toast? `<div class="toast">${icon('check',15,'var(--gold)')} ${state.toast}</div>` : ''}
-    ${state.watching? `<div class="watch-overlay"><div class="watch-circle">${state.countdown}</div><div style="font-size:14px;opacity:0.75;">الإعلان قيد العرض...</div><div style="font-size:12px;opacity:0.5;max-width:220px;text-align:center;">في التطبيق الحقيقي هذا مكان إعلان AdMob المكافئ الفعلي</div></div>` : ''}
+    ${state.watching? `<div class="watch-overlay"><div class="watch-circle">${state.countdown}</div><div style="font-size:14px;opacity:0.75;">الإعلان قيد العرض...</div></div>` : ''}
     <div class="modal-overlay" id="modal-overlay"></div>
   </div>
   <nav class="bottomnav">
@@ -524,9 +528,12 @@ function attachMainEvents(u){
     u.transactions = u.transactions || [];
     u.transactions.unshift({ id:Date.now(), type:'withdraw', amount, date:Date.now(), meta });
     state.withdrawals.push({ id:'w_'+Date.now(), email:u.email, name:u.name, points:amount, dzd:+(amount*POINT_VALUE_DZD).toFixed(2), method:meta, account, status:'pending', date:Date.now() });
-    await saveUsers(); await saveWithdrawals();
-    state.tab = 'wallet';
-    showToast('تم إرسال طلب السحب');
+    try{
+      await api('/withdraw', { method:'POST', body: JSON.stringify({ points: amount, method: meta, account }) });
+      await refreshMe();
+      state.tab = 'wallet';
+      showToast('تم إرسال طلب السحب');
+    }catch(e){ handleApiErr(e, 'wd-err'); }
   };
 }
 
@@ -534,71 +541,23 @@ async function startAd(){
   const u = getUser();
   const remaining = DAILY_LIMIT - u.watchedToday;
   if(remaining <= 0 || state.watching) return;
-  checkBotBehavior(u, Date.now());
-  if(u.blocked){ render(); return; }
-
-  if(isNativeApp() && window.Capacitor.Plugins.AdMob){
-    // Real AdMob rewarded video inside the packaged Android app
-    const { AdMob } = window.Capacitor.Plugins;
-    state.watching = true; render();
-    try{
-      await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_UNIT_ID });
-      const rewardListener = AdMob.addListener('onRewardedVideoAdReward', async ()=>{
-        rewardListener.remove();
-        state.watching = false;
-        await finishAd(u);
-      });
-      const failListener = AdMob.addListener('onRewardedVideoAdFailedToLoad', ()=>{
-        failListener.remove();
-        state.watching = false;
-        showToast('تعذّر تحميل الإعلان، حاول لاحقًا');
-        render();
-      });
-      await AdMob.showRewardVideoAd();
-    }catch(e){
-      state.watching = false;
-      showToast('تعذّر تحميل الإعلان، حاول لاحقًا');
-      render();
-    }
-    return;
-  }
-
-  // Web preview fallback (plain browser, no native AdMob available)
+  const startedAt = Date.now();
   state.watching = true; state.countdown = 5; render();
   const timer = setInterval(()=>{
     state.countdown--;
     if(state.countdown <= 0){
       clearInterval(timer);
-      finishAd(u);
+      finishAd(u, startedAt);
     } else render();
   }, 1000);
 }
-function checkBotBehavior(u, now){
-  const prev = u.lastAdStart;
-  u.lastAdStart = now;
-  if(prev == null) return;
-  const gap = now - prev;
-  u.gaps = [...(u.gaps||[]).slice(-4), gap];
-  let flag = false;
-  if(gap < AD_MIN_GAP_MS) flag = true;
-  if(u.gaps.length >= 4){
-    const avg = u.gaps.reduce((a,b)=>a+b,0)/u.gaps.length;
-    const variance = u.gaps.reduce((s,g)=>s+(g-avg)**2,0)/u.gaps.length;
-    if(Math.sqrt(variance) < 40) flag = true;
-  }
-  if(flag){
-    u.suspicion = (u.suspicion||0) + 1;
-    if(u.suspicion >= SUSPICION_LIMIT) u.blocked = true;
-  }
-}
-async function finishAd(u){
+async function finishAd(u, startedAt){
   state.watching = false;
-  u.points += POINTS_PER_AD;
-  u.watchedToday += 1;
-  u.transactions = u.transactions || [];
-  u.transactions.unshift({ id:Date.now(), type:'earn', amount:POINTS_PER_AD, date:Date.now() });
-  await saveUsers();
-  showToast(`ربحت ${POINTS_PER_AD} نقاط`);
+  try{
+    const data = await api('/user/ad/complete', { method:'POST', body: JSON.stringify({ startedAt }) });
+    state.user = data.user;
+    showToast(`ربحت ${POINTS_PER_AD} نقاط`);
+  }catch(e){ handleApiErr(e); }
 }
 async function spinWheel(){
   const u = getUser();
@@ -611,19 +570,13 @@ async function spinWheel(){
   disc.classList.add('spinning');
   disc.style.transform = `rotate(${target}deg)`;
   document.getElementById('spin-btn').disabled = true;
+  const amount = WHEEL_PRIZES[idx];
   setTimeout(async ()=>{
-    u.wheelSpun = true;
-    const amount = WHEEL_PRIZES[idx];
-    if(amount > 0){
-      u.points += amount;
-      u.transactions = u.transactions || [];
-      u.transactions.unshift({ id:Date.now(), type:'earn', amount, date:Date.now(), meta:'عجلة الحظ' });
-      await saveUsers();
-      showToast(`ربحت ${amount} نقاط من عجلة الحظ`);
-    } else {
-      await saveUsers();
-      showToast('بدون ربح هالمرة، جرّب بكرة');
-    }
+    try{
+      const data = await api('/user/wheel', { method:'POST' });
+      state.user = data.user;
+      showToast(amount>0? `ربحت ${amount} نقاط من عجلة الحظ` : 'بدون ربح هالمرة، جرّب بكرة');
+    }catch(e){ handleApiErr(e); }
     render();
   }, 3200);
 }
@@ -714,15 +667,13 @@ function openReactionGame(){
   },1000);
 }
 async function rewardGame(amount){
-  const u = getUser();
-  u.points += amount;
-  u.lastGameAt = Date.now();
-  u.transactions = u.transactions || [];
-  u.transactions.unshift({ id:Date.now(), type:'earn', amount, date:Date.now(), meta:'لعبة' });
-  await saveUsers();
-  document.getElementById('modal-overlay').classList.remove('active');
-  showToast(`ربحت ${amount} نقاط`);
-  render();
+  try{
+    const data = await api('/user/game/reward', { method:'POST' });
+    state.user = data.user;
+    document.getElementById('modal-overlay').classList.remove('active');
+    showToast(`ربحت ${amount} نقاط`);
+    render();
+  }catch(e){ handleApiErr(e); }
 }
 
 function renderBlocked(){
@@ -739,9 +690,19 @@ function attachBlockedEvents(){
 
 /* ---------- ADMIN ---------- */
 let adminTab = 'withdrawals';
+async function loadAdmin(){
+  try{
+    const stats = await api('/admin/stats');
+    const withdrawals = await api('/admin/withdrawals');
+    const users = await api('/admin/users');
+    const filterRules = await api('/admin/filterRules');
+    const audit = await api('/admin/auditLog');
+    state.adminData = { stats, withdrawals, users, filterRules, audit };
+    render();
+  }catch(e){ handleApiErr(e); }
+}
 function renderAdmin(){
-  const pending = state.withdrawals.filter(r=>r.status==='pending');
-  const totalPendingDzd = pending.reduce((s,r)=>s+r.dzd,0);
+  const a = state.adminData || { stats:{pendingCount:0,totalPendingDzd:0,totalUsers:0}, withdrawals:[], users:[], filterRules:[], audit:[] };
   return `
   <div class="admin-top">
     <div><div class="disp" style="font-size:18px;font-weight:800;">لوحة تحكم ربحي</div><div style="font-size:11.5px;opacity:0.65;">admin@rebhi.dz</div></div>
@@ -749,20 +710,21 @@ function renderAdmin(){
   </div>
   <div class="admin-body">
     <div class="stat-row">
-      <div class="stat-card"><div class="stat-lbl">طلبات معلّقة</div><div class="disp stat-val">${pending.length}</div></div>
-      <div class="stat-card"><div class="stat-lbl">قيمة الطلبات المعلّقة</div><div class="disp stat-val">${totalPendingDzd.toFixed(2)} دج</div></div>
-      <div class="stat-card"><div class="stat-lbl">إجمالي المستخدمين</div><div class="disp stat-val">${Object.keys(state.users).length}</div></div>
+      <div class="stat-card"><div class="stat-lbl">طلبات معلّقة</div><div class="disp stat-val">${a.stats.pendingCount}</div></div>
+      <div class="stat-card"><div class="stat-lbl">قيمة الطلبات المعلّقة</div><div class="disp stat-val">${a.stats.totalPendingDzd.toFixed(2)} دج</div></div>
+      <div class="stat-card"><div class="stat-lbl">إجمالي المستخدمين</div><div class="disp stat-val">${a.stats.totalUsers}</div></div>
     </div>
     <div class="admin-tabs2">
       <div class="admin-tab2 ${adminTab==='withdrawals'?'active':''}" data-atab="withdrawals">طلبات السحب</div>
       <div class="admin-tab2 ${adminTab==='users'?'active':''}" data-atab="users">المستخدمون</div>
+      <div class="admin-tab2 ${adminTab==='rules'?'active':''}" data-atab="rules">فلترة المحتوى</div>
     </div>
-    ${adminTab==='withdrawals'? renderAdminWithdrawals() : renderAdminUsers()}
-    <div style="font-size:11.5px;color:var(--muted);margin-top:16px;line-height:1.7;">بالنسخة الحقيقية، الموافقة هنا لازم تُفعّل عملية تُنفّذ التحويل الفعلي (شحن فليكسي عبر API المزوّد، أو تسجيل العملية للمعالجة اليدوية لتحويلات CCP)، مع سجل تدقيق (audit log) لكل عملية إدارية.</div>
+    ${adminTab==='withdrawals'? renderAdminWithdrawals(a.withdrawals)
+      : adminTab==='users'? renderAdminUsers(a.users)
+      : renderAdminRules(a.filterRules, a.audit)}
   </div>`;
 }
-function renderAdminWithdrawals(){
-  const list = [...state.withdrawals].sort((a,b)=>b.date-a.date);
+function renderAdminWithdrawals(list){
   if(list.length===0) return '<div class="empty">لا توجد طلبات سحب</div>';
   return `<div class="section-lbl">طلبات السحب</div><div class="req-list">
     ${list.map(r=>`
@@ -779,41 +741,101 @@ function renderAdminWithdrawals(){
       </div>`).join('')}
   </div>`;
 }
-function renderAdminUsers(){
-  const list = Object.values(state.users).sort((a,b)=>b.points-a.points);
+function renderAdminUsers(list){
   if(list.length===0) return '<div class="empty">لا يوجد مستخدمون بعد</div>';
   return `<div class="section-lbl">المستخدمون</div><div class="req-list">
     ${list.map(u=>`
       <div class="req-item">
         <div><div class="req-name">${u.name} — ${u.email}</div><div class="req-meta">انضم في ${fmtDate(u.joinedAt)} ${u.blocked? '· موقوف':''}</div></div>
         <div class="disp" style="font-weight:800;">${u.points} نقطة</div>
+        ${u.blocked
+          ? `<button class="mini-btn ok" data-unblock="${u.id}">${icon('check',13)} إلغاء الإيقاف</button>`
+          : `<button class="mini-btn bad" data-block="${u.id}">${icon('x',13)} إيقاف</button>`}
       </div>`).join('')}
   </div>`;
 }
+function renderAdminRules(rules, audit){
+  return `
+    <div class="section-lbl">كلمات ممنوعة (قمار / +18)</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input id="r-pattern" placeholder="كلمة ممنوعة مثل: رهان" style="flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);font-size:13px;">
+      <select id="r-category" style="padding:10px;border-radius:10px;border:1.5px solid var(--line);font-size:13px;">
+        <option value="gambling">قمار</option>
+        <option value="adult">+18</option>
+      </select>
+      <button class="mini-btn ok" id="r-add">${icon('check',13)} إضافة</button>
+    </div>
+    <div class="req-list">
+      ${rules.map(r=>`
+        <div class="req-item">
+          <div><div class="req-name">${r.pattern}</div><div class="req-meta">${r.category==='gambling'?'قمار':'محتوى +18'}</div></div>
+          <button class="mini-btn bad" data-delrule="${r.id}">${icon('x',13)} حذف</button>
+        </div>`).join('')}
+    </div>
+    <div class="section-lbl" style="margin-top:20px;">سجل التدقيق (Audit Log)</div>
+    <div class="req-list">
+      ${audit.length===0? '<div class="empty">لا يوجد نشاط</div>' : audit.map(l=>`
+        <div class="req-item"><div class="req-name">${l.action}</div><div class="req-meta">${l.detail||''} · ${fmtDate(l.date)} ${fmtTime(l.date)}</div></div>`).join('')}
+    </div>`;
+}
 function attachAdminEvents(){
-  document.getElementById('admin-logout').onclick = ()=>{ state.screen='auth'; render(); };
+  document.getElementById('admin-logout').onclick = ()=>{ state.screen='auth'; state.adminData=null; render(); };
   document.querySelectorAll('[data-atab]').forEach(t=>{ t.onclick = ()=>{ adminTab = t.dataset.atab; render(); }; });
   document.querySelectorAll('[data-approve]').forEach(b=>{
     b.onclick = async ()=>{
-      const r = state.withdrawals.find(x=>x.id===b.dataset.approve);
-      r.status = 'approved';
-      await saveWithdrawals();
-      render();
+      try{ await api(`/admin/withdrawals/${b.dataset.approve}/approve`, { method:'POST' }); await loadAdmin(); }
+      catch(e){ handleApiErr(e); }
     };
   });
   document.querySelectorAll('[data-reject]').forEach(b=>{
     b.onclick = async ()=>{
-      const r = state.withdrawals.find(x=>x.id===b.dataset.reject);
-      r.status = 'rejected';
-      const u = state.users[r.email];
-      if(u){ u.points += r.points; await saveUsers(); }
-      await saveWithdrawals();
-      render();
+      try{ await api(`/admin/withdrawals/${b.dataset.reject}/reject`, { method:'POST' }); await loadAdmin(); }
+      catch(e){ handleApiErr(e); }
+    };
+  });
+  document.querySelectorAll('[data-block]').forEach(b=>{
+    b.onclick = async ()=>{
+      try{ await api(`/admin/users/${b.dataset.block}/block`, { method:'POST' }); await loadAdmin(); }
+      catch(e){ handleApiErr(e); }
+    };
+  });
+  document.querySelectorAll('[data-unblock]').forEach(b=>{
+    b.onclick = async ()=>{
+      try{ await api(`/admin/users/${b.dataset.unblock}/unblock`, { method:'POST' }); await loadAdmin(); }
+      catch(e){ handleApiErr(e); }
+    };
+  });
+  const addBtn = document.getElementById('r-add');
+  if(addBtn) addBtn.onclick = async ()=>{
+    const pattern = document.getElementById('r-pattern').value.trim();
+    const category = document.getElementById('r-category').value;
+    if(!pattern) return;
+    try{ await api('/admin/filterRules', { method:'POST', body: JSON.stringify({ pattern, category }) }); await loadAdmin(); }
+    catch(e){ handleApiErr(e); }
+  };
+  document.querySelectorAll('[data-delrule]').forEach(b=>{
+    b.onclick = async ()=>{
+      try{ await api(`/admin/filterRules/${b.dataset.delrule}`, { method:'DELETE' }); await loadAdmin(); }
+      catch(e){ handleApiErr(e); }
     };
   });
 }
 
-(async function init(){ render(); await loadData(); render(); })();
+(async function init(){
+  render();
+  if(authToken && state.screen==='auth'){
+    try{
+      const data = await api('/user/me');
+      state.user = data.user;
+      state.transactions = data.transactions;
+      state.screen = data.user.email===ADMIN_EMAIL ? 'admin' : 'auth';
+      if(data.user.email===ADMIN_EMAIL) await loadAdmin();
+      else render();
+    }catch(e){ /* token expired or invalid */ }
+  }
+  state.loading = false;
+  render();
+})();
 </script>
 </body>
 </html>
