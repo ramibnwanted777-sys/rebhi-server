@@ -105,7 +105,9 @@ svg.ic{display:block;flex-shrink:0;}
 
 .watch-overlay{position:absolute;inset:0;background:rgba(10,14,11,0.94);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:10px;z-index:20;padding:24px;}
 .ad-badge{background:var(--gold);color:var(--ink);font-size:12px;font-weight:800;padding:6px 16px;border-radius:999px;}
-.ad-skip{border:1px solid rgba(255,255,255,0.25);background:transparent;color:#fff;border-radius:999px;padding:10px 26px;font-size:13.5px;font-weight:700;margin-top:18px;}
+.ad-progress{width:200px;height:6px;background:rgba(255,255,255,0.15);border-radius:999px;margin-top:20px;overflow:hidden;}
+.ad-progress-fill{height:100%;background:var(--gold);border-radius:999px;animation:adfill 5s linear forwards;width:0;}
+@keyframes adfill{to{width:100%;}}
 
 .blocked-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 30px;text-align:center;background:#1B1210;color:#fff;}
 .blocked-icon{width:70px;height:70px;border-radius:50%;background:rgba(179,67,43,0.15);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
@@ -381,7 +383,7 @@ function renderMainApp(u){
     ${state.tab==='wallet'? renderWallet(u): ''}
     ${state.tab==='withdraw'? renderWithdraw(u): ''}
     ${state.toast? `<div class="toast">${icon('check',15,'var(--gold)')} ${state.toast}</div>` : ''}
-    ${state.watching? `<div class="watch-overlay"><div class="ad-badge">إعلان</div><div style="font-size:20px;font-weight:800;margin-top:8px;">محتوى رعائي</div><div style="font-size:13px;opacity:0.7;margin-top:6px;max-width:240px;text-align:center;">شكراً لصبرك — يتبقى ${state.countdown} ثوانٍ</div><div class="ad-skip" id="ad-skip">تخطي (${state.countdown})</div></div>` : ''}
+    ${state.watching? `<div class="watch-overlay"><div class="ad-badge">إعلان</div><div style="font-size:20px;font-weight:800;margin-top:8px;">محتوى رعائي</div><div style="font-size:13px;opacity:0.7;margin-top:6px;max-width:240px;text-align:center;">شكراً لصبرك — يتبقى <span class="ad-count-text" style="font-weight:800;">${state.countdown}</span> ثوانٍ</div><div class="ad-progress"><div class="ad-progress-fill"></div></div></div>` : ''}
     <div class="modal-overlay" id="modal-overlay"></div>
   </div>
   <nav class="bottomnav">
@@ -559,12 +561,10 @@ async function startAd(){
   if(remaining <= 0 || state.watching) return;
   const startedAt = Date.now();
   state.watching = true; state.countdown = 5; render();
-  const skip = document.getElementById('ad-skip');
-  if(skip) skip.onclick = () => { if(state.countdown<=0) return; };
   const timer = setInterval(()=>{
     state.countdown--;
-    const s = document.getElementById('ad-skip');
-    if(s) s.textContent = `تخطي (${state.countdown})`;
+    const t = document.querySelector('.watch-overlay .ad-count-text');
+    if(t) t.textContent = state.countdown;
     if(state.countdown <= 0){
       clearInterval(timer);
       finishAd(u, startedAt);
@@ -573,11 +573,15 @@ async function startAd(){
 }
 async function finishAd(u, startedAt){
   state.watching = false;
+  showToast('جارِ إضافة النقاط...');
   try{
     const data = await api('/user/ad/complete', { method:'POST', body: JSON.stringify({ startedAt }) });
     state.user = data.user;
-    showToast(`ربحت ${POINTS_PER_AD} نقاط`);
-  }catch(e){ handleApiErr(e); }
+    showToast(`ربحت ${POINTS_PER_AD} نقاط ✨`);
+  }catch(e){
+    handleApiErr(e);
+    showToast('تعذّر الإكمال، حاول مجددًا');
+  }
 }
 async function spinWheel(){
   const u = getUser();
