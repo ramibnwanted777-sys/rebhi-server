@@ -147,6 +147,11 @@ svg.ic{display:block;flex-shrink:0;}
 .reaction-zone{position:relative;height:220px;background:var(--bg);border-radius:16px;margin:16px 0 4px;overflow:hidden;border:1.5px solid var(--line);}
 .reaction-target{width:60px;height:60px;border-radius:50%;background:var(--green);position:absolute;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px -6px rgba(11,110,79,0.5);}
 .game-cooldown-icon{background:var(--goldSoft);border-radius:16px;width:56px;height:56px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+.settings-card{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:6px 16px;}
+.settings-row{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);}
+.settings-row:last-child{border-bottom:none;}
+.settings-label{font-size:13px;color:var(--muted);}
+.settings-value{font-size:13.5px;font-weight:700;text-align:left;}
 
 
 </style>
@@ -178,6 +183,7 @@ const ICONS = {
   logout: `<path d="M9 5H6.5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2H9"/><path d="M15 8l4 4-4 4"/><path d="M19 12H9"/>`,
   target: `<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>`,
   bolt: `<path d="M12.5 3.5L5 13.5h5.5L11 20.5l7.5-11H13z"/>`,
+  gear: `<path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6z"/><path d="M19.4 13.6l.1-1.6-.1-1.6 2-1.5-1.8-3-2.2 1a7.4 7.4 0 0 0-2.7-1.6L14.4 3h-3.5l-.3 2.3c-1 .2-1.9.8-2.7 1.6l-2.2-1-1.8 3 2 1.5-.1 1.6.1 1.6-2 1.5 1.8 3 2.2-1c.8.8 1.7 1.4 2.7 1.6l.3 2.3h3.5l.3-2.3c1-.2 1.9-.8 2.7-1.6l2.2 1 1.8-3-2-1.5z"/>`,
 };
 function icon(name, size=18, color='currentColor', stroke=1.8){
   const body = ICONS[name] || '';
@@ -205,7 +211,7 @@ async function api(path, opts={}){
   const headers = { 'Content-Type':'application/json', ...(opts.headers||{}) };
   if(authToken) headers['Authorization'] = 'Bearer '+authToken;
   const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), 45000);
+  const timer = setTimeout(()=>controller.abort(), 90000);
   try{
     const res = await fetch(API_BASE+path, { ...opts, headers, signal: controller.signal });
     clearTimeout(timer);
@@ -382,6 +388,7 @@ function renderMainApp(u){
     ${state.tab==='games'? renderGames(u): ''}
     ${state.tab==='wallet'? renderWallet(u): ''}
     ${state.tab==='withdraw'? renderWithdraw(u): ''}
+    ${state.tab==='settings'? renderSettings(u): ''}
     ${state.toast? `<div class="toast">${icon('check',15,'var(--gold)')} ${state.toast}</div>` : ''}
     ${state.watching? `<div class="watch-overlay"><div class="ad-badge">إعلان</div><div style="font-size:20px;font-weight:800;margin-top:8px;">محتوى رعائي</div><div style="font-size:13px;opacity:0.7;margin-top:6px;max-width:240px;text-align:center;">شكراً لصبرك — يتبقى <span class="ad-count-text" style="font-weight:800;">${state.countdown}</span> ثوانٍ</div><div class="ad-progress"><div class="ad-progress-fill"></div></div></div>` : ''}
     <div class="modal-overlay" id="modal-overlay"></div>
@@ -391,6 +398,7 @@ function renderMainApp(u){
     <button class="navbtn ${state.tab==='games'?'active':''}" data-tab="games">${icon('gamepad',19)}ألعاب</button>
     <button class="navbtn ${state.tab==='wallet'?'active':''}" data-tab="wallet">${icon('wallet',19)}المحفظة</button>
     <button class="navbtn ${state.tab==='withdraw'?'active':''}" data-tab="withdraw">${icon('arrowDown',19)}السحب</button>
+    <button class="navbtn ${state.tab==='settings'?'active':''}" data-tab="settings">${icon('gear',19)}الإعدادات</button>
   </nav>
   <button id="logout-btn" style="position:absolute;top:14px;left:14px;border:none;background:rgba(255,255,255,0.15);color:#fff;border-radius:8px;padding:6px 8px;display:flex;">${icon('logout',15,'#fff')}</button>`;
 }
@@ -501,6 +509,27 @@ function renderWdMethodFields(){
     <input id="wd-ccp" type="text" placeholder="00799999 00 12" style="width:100%;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line);font-size:14px;">`;
 }
 
+function renderSettings(u){
+  return `
+  <div class="tabpad">
+    <div class="disp" style="font-size:18px;font-weight:800;margin-bottom:4px;">الإعدادات</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:18px;">حسابك وبيانات التطبيق</div>
+    <div class="settings-card">
+      <div class="settings-row"><span class="settings-label">الاسم</span><span class="settings-value">${u.name}</span></div>
+      <div class="settings-row"><span class="settings-label">البريد</span><span class="settings-value" dir="ltr">${u.email}</span></div>
+      <div class="settings-row"><span class="settings-label">رصيدك</span><span class="settings-value">${u.points} نقطة</span></div>
+      <div class="settings-row"><span class="settings-label">الإنضمام</span><span class="settings-value">${fmtDate(u.joinedAt)}</span></div>
+    </div>
+    <div class="guide-box" style="margin-top:16px;">
+      <div class="disp guide-title">عن التطبيق</div>
+      <div class="guide-row"><span>الإعلانات يوميًا</span><span>${DAILY_LIMIT} إعلان</span></div>
+      <div class="guide-row"><span>نقاط للإعلان</span><span>${POINTS_PER_AD} نقاط</span></div>
+      <div class="guide-row"><span>الإصدار</span><span dir="ltr">1.0.0</span></div>
+    </div>
+    <button id="settings-contact" class="primary-btn" style="margin-top:18px;">${icon('mail',15,'#fff')} تواصل مع الدعم</button>
+  </div>`;
+}
+
 function attachMainEvents(u){
   document.getElementById('logout-btn').onclick = ()=>{ state.user=null; state.tab='home'; render(); };
   document.querySelectorAll('[data-tab]').forEach(b=>{ b.onclick = ()=>{ state.tab=b.dataset.tab; render(); }; });
@@ -521,6 +550,11 @@ function attachMainEvents(u){
   if(mFlexi) mFlexi.onclick = ()=>{ wdMethod='flexi'; render(); };
   if(mCcp) mCcp.onclick = ()=>{ wdMethod='ccp'; render(); };
   document.querySelectorAll('[data-op]').forEach(b=>{ b.onclick=()=>{ wdOperator=b.dataset.op; render(); }; });
+
+  const contactBtn = document.getElementById('settings-contact');
+  if(contactBtn) contactBtn.onclick = ()=>{
+    showToast('شكرًا لوصولك! راسلنا عبر البريد app.support@rebhi.dz');
+  };
 
   const amtInput = document.getElementById('wd-amount');
   if(amtInput) amtInput.oninput = ()=>{ document.getElementById('wd-dzd').textContent = `= ${(Number(amtInput.value||0)*POINT_VALUE_DZD).toFixed(2)} دج`; };
@@ -560,6 +594,8 @@ async function startAd(){
   const remaining = DAILY_LIMIT - u.watchedToday;
   if(remaining <= 0 || state.watching) return;
   const startedAt = Date.now();
+  // Wake the free cloud server in the background so the API call after the countdown is fast
+  try{ fetch(API_BASE.replace('/api','')+'/health'); }catch(e){}
   state.watching = true; state.countdown = 5; render();
   const timer = setInterval(()=>{
     state.countdown--;
@@ -579,8 +615,11 @@ async function finishAd(u, startedAt){
     state.user = data.user;
     showToast(`ربحت ${POINTS_PER_AD} نقاط ✨`);
   }catch(e){
+    // Free cloud server may still be waking up: retry once after a short pause
+    if(e.message && e.message.includes('السيرفر') || e.status === 0 || !e.status){
+      try{ await new Promise(r=>setTimeout(r, 4000)); const data = await api('/user/ad/complete', { method:'POST', body: JSON.stringify({ startedAt }) }); state.user = data.user; showToast(`ربحت ${POINTS_PER_AD} نقاط ✨`); return; }catch(e2){ handleApiErr(e2); }
+    }
     handleApiErr(e);
-    showToast('تعذّر الإكمال، حاول مجددًا');
   }
 }
 async function spinWheel(){
