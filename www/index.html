@@ -215,58 +215,45 @@ let state = { screen:'auth', authMode:'login', user:null, transactions:[], withd
 
 // ─── AdMob Real Rewarded Video ───
 let AdMob = null;
-let rewardCallback = null;
 
-async function initAdMob(){
+function initAdMob(){
   try {
     if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob){
       AdMob = window.Capacitor.Plugins.AdMob;
-      await AdMob.initialize({ initializeForTesting: true });
-      await loadRewardedAd();
-      console.log('AdMob initialized (test mode)');
-    } else {
-      console.log('AdMob not available (browser/dev mode) — using simulated ads');
+      AdMob.initialize({ initializeForTesting: true }).then(function(){
+        AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID }).then(function(){
+          state.adReady = true;
+        }).catch(function(){});
+      }).catch(function(e){ console.warn('AdMob init failed:', e); AdMob = null; });
     }
-  } catch(e){ console.warn('AdMob init failed:', e); }
+  } catch(e){ AdMob = null; }
 }
 
-async function loadRewardedAd(){
-  if(!AdMob) return;
-  try {
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-    state.adReady = true;
-  } catch(e){ console.warn('Rewarded ad preload failed:', e); state.adReady = false; }
-}
-
-async function showRewardedAd(onReward){
+function showRewardedAd(onReward){
   if(!AdMob){ showSimulatedAd(onReward); return; }
+  state.watching = true; render();
   try {
-    state.adLoading = true; render();
-    await AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID });
-    state.adLoading = false;
-    const result = await AdMob.showRewardVideoAd();
-    state.watching = false;
-    if(result && result.reward && result.reward.amount){
-      onReward(result.reward.amount);
-    } else {
-      onReward(POINTS_PER_AD);
-    }
-    loadRewardedAd();
+    AdMob.showRewardVideoAd().then(function(result){
+      state.watching = false;
+      var amount = POINTS_PER_AD;
+      try{ if(result && result.reward && result.reward.amount) amount = result.reward.amount; }catch(e){}
+      onReward(amount);
+      AdMob.prepareRewardVideoAd({ adId: ADMOB_REWARDED_ID }).catch(function(){});
+    }).catch(function(e){
+      console.warn('AdMob show failed:', e);
+      showSimulatedAd(onReward);
+    });
   } catch(e){
-    state.watching = false;
-    console.warn('Rewarded ad failed, using simulated:', e);
     showSimulatedAd(onReward);
   }
 }
 
 function showSimulatedAd(onReward){
-  // Fallback: 5-second simulated ad when AdMob unavailable
-  state.watching = true; state.countdown = 5;
-  showToast('جارِ تحميل الإعلان...');
-  const timer = setInterval(()=>{
+  state.countdown = 5; render();
+  var timer = setInterval(function(){
     state.countdown--;
-    const t = document.querySelector('.watch-overlay .ad-count-text');
-    if(t) t.textContent = state.countdown;
+    var t = document.querySelector('.ad-count-text');
+    if(t) t.textContent = Math.max(state.countdown, 0);
     if(state.countdown <= 0){
       clearInterval(timer);
       state.watching = false;
@@ -669,14 +656,13 @@ async function startAd(){
   try{ fetch(API_BASE.replace('/api','')+'/health'); }catch(e){}
   state.watching = true; render();
   // Show real AdMob rewarded video, or fallback to simulated
-  await showRewardedAd(async (rewardAmount)=>{
-    try{
-      const data = await api('/user/ad/complete', { method:'POST', body: JSON.stringify({ startedAt: Date.now() }) });
+  showRewardedAd(function(rewardAmount){
+    api('/user/ad/complete', { method:'POST', body: JSON.stringify({ startedAt: Date.now() }) }).then(function(data){
       state.user = data.user;
-      showToast(`ربحت ${rewardAmount || POINTS_PER_AD} نقاط ✨`);
-    }catch(e){
+      showToast('ربحت ' + (rewardAmount || POINTS_PER_AD) + ' نقاط ✨');
+    }).catch(function(e){
       handleApiErr(e);
-    }
+    });
   });
 }
 async function spinWheel(){
